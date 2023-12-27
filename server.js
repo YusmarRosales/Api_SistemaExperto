@@ -15,29 +15,36 @@ const db = mysql.createConnection({
     database: "login"
 });
 
-
 app.post('/ingreso', (req, res) => {
     const sql = "SELECT * FROM registro WHERE `Usuario` = ? AND `Contrasena` = ?";
-    const values = [
-        req.body.Usuario,
-        req.body.Contrasena
-    ];
+    const values = [req.body.Usuario, req.body.Contrasena];
 
     db.query(sql, values, (err, result) => {
         if (err) {
+            console.error("Error al consultar la base de datos:", err);
             return res.json({ Message: "Error al entrar al servidor" });
         }
+
         if (result.length > 0) {
             const user = result[0];
-            const token = jwt.sign({ Usuario: user.Usuario }, 'tu_clave_secreta', { expiresIn: '1h' });
-            // Los datos ingresados son válidos, el usuario puede iniciar sesión
-            return res.json({ Message: "Inicio de sesión exitoso", token: token });
+
+            // Agregar un registro de consola para ver el contenido de 'user'
+            console.log("Usuario encontrado:", user);
+
+            // Comprobar si 'user' contiene el campo 'Usuario'
+            if (user.Usuario) {
+                const token = jwt.sign({ Usuario: user.Usuario }, 'tu_clave_secreta', { expiresIn: '1h' });
+                return res.json({ Message: "Inicio de sesión exitoso", token: token });
+            } else {
+                console.error("El campo 'Usuario' no se encuentra en el objeto 'user'");
+                return res.status(500).json({ Message: "Error interno del servidor" });
+            }
         } else {
-            // Los datos ingresados no coinciden con ningún registro en la base de datos
             return res.json({ Message: "Credenciales inválidas" });
         }
     });
 });
+
 
 
 app.post('/registro', (req, res) => {
@@ -61,28 +68,43 @@ app.post('/registro', (req, res) => {
     });
 });
 
+const verificarToken = (req, res, next) => {
+    const token = req.headers['authorization'];
+    console.log("token", token);
+    if (!token) {
+        return res.status(403).send("Se requiere un token para autenticación");
+    }
+
+    try {
+        const decoded = jwt.verify(token.split("Bearer ")[1], 'tu_clave_secreta');
+        req.Usuario = decoded.Usuario;
+        next();
+    } catch (error) {
+        return res.status(401).send("Token inválido");
+    }
+};
 
 app.post('/guardar', verificarToken, (req, res) => {
-    const sql = "INSERT INTO psicologico (`Usuario`, `resultado`) VALUES (?, ?)";
-    const values = [
-        req.body.Usuario,
-        req.body.resultado
-    ];
+    const Usuario = req.Usuario;
+    const resultado = req.body.resultado;
 
-    db.query(sql, values, (err, result) => {
+    console.log("Usuario:", Usuario);
+    console.log("Resultado:", resultado);
+
+    if (!Usuario || !resultado) {
+        return res.status(400).json({ error: "Usuario o resultado no proporcionados" });
+    }
+
+    const sql = "INSERT INTO psicologico (`Usuario`, `resultado`) VALUES (?, ?)";
+    db.query(sql, [Usuario, resultado], (err, result) => {
         if (err) {
-            console.log(err);
+            console.error("Error al guardar en psicologico:", err);
             return res.status(500).json({ error: "Error al guardar el resultado del test" });
-        } if (result.length > 0) {
-            const user = result[0];
-            const token = jwt.sign({ Usuario: user.Usuario }, 'tu_clave_secreta', { expiresIn: '1h' });
-            // Los datos ingresados son válidos, el usuario puede iniciar sesión
-            return res.json({ Message: "Inicio de sesión exitoso", token: token });
-        } else {
-            return res.status(200).json({ message: "Resultado del test guardado correctamente" });
         }
+        return res.status(200).json({ message: "Resultado del test guardado correctamente" });
     });
 });
+
 
 
 app.listen(8081, () => {
