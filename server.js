@@ -106,6 +106,26 @@ app.post('/guardar', verificarToken, (req, res) => {
 });
 
 
+app.post('/guardarJ', verificarToken, (req, res) => {
+    const Usuario = req.Usuario;
+    const resultado = req.body.resultado;
+
+    console.log("Usuario:", Usuario);
+    console.log("Resultado:", resultado);
+
+    if (!Usuario || !resultado) {
+        return res.status(400).json({ error: "Usuario o resultado no proporcionados" });
+    }
+
+    const sql = "INSERT INTO juridico (`Usuario`, `resultado`) VALUES (?, ?)";
+    db.query(sql, [Usuario, resultado], (err, result) => {
+        if (err) {
+            console.error("Error al guardar en psicologico:", err);
+            return res.status(500).json({ error: "Error al guardar el resultado del test" });
+        }
+        return res.status(200).json({ message: "Resultado del test guardado correctamente" });
+    });
+});
 
 app.listen(8081, () => {
     console.log("Servidor iniciado en el puerto 8081");
