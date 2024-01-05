@@ -33,8 +33,11 @@ app.post('/ingreso', (req, res) => {
 
             // Comprobar si 'user' contiene el campo 'Usuario'
             if (user.Usuario) {
-                const token = jwt.sign({ Usuario: user.Usuario }, 'tu_clave_secreta', { expiresIn: '1h' });
-                return res.json({ Message: "Inicio de sesión exitoso", token: token });
+                const token = jwt.sign({ Usuario: user.Usuario, rol: user.rol }, 'tu_clave_secreta', { expiresIn: '1h' });
+                return res.json({ 
+                    Message: "Inicio de sesión exitoso",
+                    token: token 
+                    });
             } else {
                 console.error("El campo 'Usuario' no se encuentra en el objeto 'user'");
                 return res.status(500).json({ Message: "Error interno del servidor" });
@@ -42,6 +45,7 @@ app.post('/ingreso', (req, res) => {
         } else {
             return res.json({ Message: "Credenciales inválidas" });
         }
+        
     });
 });
 
@@ -105,6 +109,16 @@ app.post('/guardar', verificarToken, (req, res) => {
     });
 });
 
+app.get('/resultadosPsicolo', (req, res) => {
+    const sql = "SELECT * FROM psicologico";
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error al obtener los resultados:", err);
+            return res.status(500).json({ error: "Error al obtener los resultados" });
+        }
+        res.json(results);
+    });
+});
 
 app.post('/guardarJ', verificarToken, (req, res) => {
     const Usuario = req.Usuario;
@@ -124,6 +138,17 @@ app.post('/guardarJ', verificarToken, (req, res) => {
             return res.status(500).json({ error: "Error al guardar el resultado del test" });
         }
         return res.status(200).json({ message: "Resultado del test guardado correctamente" });
+    });
+});
+
+app.get('/resultadosJuridic', (req, res) => {
+    const sql = "SELECT * FROM juridico";
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error al obtener los resultados:", err);
+            return res.status(500).json({ error: "Error al obtener los resultados" });
+        }
+        res.json(results);
     });
 });
 
