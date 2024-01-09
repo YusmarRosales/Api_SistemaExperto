@@ -109,6 +109,31 @@ app.post('/guardar', verificarToken, (req, res) => {
     });
 });
 
+app.get('/verificarTest', verificarToken, (req, res) => {
+    const Usuario = req.Usuario;
+
+    if (!Usuario) {
+        return res.status(400).json({ error: "Usuario no proporcionado" });
+    }
+
+    const sql = "SELECT * FROM psicologico WHERE Usuario = ?";
+    db.query(sql, [Usuario], (err, result) => {
+        if (err) {
+            console.error("Error al consultar en psicologico:", err);
+            return res.status(500).json({ error: "Error al verificar el test" });
+        }
+
+        if (result.length > 0) {
+            // El usuario ya completó el test
+            return res.json({ testCompletado: true });
+        } else {
+            // El usuario no ha completado el test
+            return res.json({ testCompletado: false });
+        }
+    });
+});
+
+//enpoind para ver los resultados
 app.get('/resultadosPsicolo', (req, res) => {
     const sql = "SELECT * FROM psicologico";
     db.query(sql, (err, results) => {
@@ -141,6 +166,31 @@ app.post('/guardarJ', verificarToken, (req, res) => {
     });
 });
 
+app.get('/verificarTestJuri', verificarToken, (req, res) => {
+    const Usuario = req.Usuario;
+
+    if (!Usuario) {
+        return res.status(400).json({ error: "Usuario no proporcionado" });
+    }
+
+    const sql = "SELECT * FROM juridico WHERE Usuario = ?";
+    db.query(sql, [Usuario], (err, result) => {
+        if (err) {
+            console.error("Error al consultar en psicologico:", err);
+            return res.status(500).json({ error: "Error al verificar el test" });
+        }
+
+        if (result.length > 0) {
+            // El usuario ya completó el test
+            return res.json({ testCompletado: true });
+        } else {
+            // El usuario no ha completado el test
+            return res.json({ testCompletado: false });
+        }
+    });
+});
+
+//enpoind para ver los resultados
 app.get('/resultadosJuridic', (req, res) => {
     const sql = "SELECT * FROM juridico";
     db.query(sql, (err, results) => {
